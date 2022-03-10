@@ -6,13 +6,14 @@ const {
   updateRefund,
   deleteRefund,
 } = require("../controllers/refundController");
+const { protect } = require("../middlewares/authMiddleware");
 const router = express.Router();
 
 router
-  .route("/refund/:id")
-  .get(getRefund)
-  .put(updateRefund)
-  .delete(deleteRefund);
-router.route("/refund").get(getRefunds).post(postRefund);
+  .route("/:id")
+  .get(protect, getRefund)
+  .put(protect, updateRefund)
+  .delete(protect, deleteRefund);
+router.route("/").get(protect, getRefunds).post(protect, postRefund);
 
 module.exports = router;

@@ -2,7 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Refund = require("../models/refundsModel");
 
 const getRefunds = asyncHandler(async (req, res) => {
-  const refunds = await Refund.find();
+  const refunds = await Refund.find({ user: req.user.id });
   res.status(200).json(refunds);
 });
 const getRefund = asyncHandler(async (req, res) => {
@@ -18,6 +18,7 @@ const postRefund = asyncHandler(async (req, res) => {
     img,
     dateBuying,
     status,
+    user: req.user.id,
   });
   res.status(200).json(refund);
 });
