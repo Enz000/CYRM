@@ -1,42 +1,40 @@
-const Organisation = require("../models/organisationModel");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcryptjs");
+const Organisation = require("../models/organisationModel");
+const User = require("../models/userModel");
 
 const organisationController = {
+  /*
+ !@Method GET
+ !@route /api/organisation/
+  */
   getAll: asyncHandler(async (req, res) => {
     const organisations = await Organisation.find();
     res.status(200).json(organisations);
   }),
-  findById: asyncHandler(async (req, res) => {
-    const { _id, name, email, users } = await Organisation.findById(
-      req.params.id
-    );
-    res.status(200).json({
-      _id,
-      name,
-      email,
-      users,
-    });
-  }),
+  /*
+  !@Method POST
+  !@route /api/organisation/register
+  */
   create: asyncHandler(async (req, res) => {
     let hashedPassword;
-    const { name, email, password, users } = req.body;
+    const { name, email, password } = req.body;
     const orgaExist = await Organisation.findOne({ email });
     if (orgaExist) {
       res.status(401);
       throw new Error("Une organisatione existe déjà avec cette adresse mail");
     }
-    if (password.length >= 6) {
-      hashedPassword = await bcrypt.hash(password, 10);
+    if (!password) {
+      throw new Error("Veuillez renseigner un mot de passe");
+    } else if (password.length < 6) {
+      throw new Error("Votre mot de passe doit faire plus de 6 caractères");
     } else {
-      res.status(400);
-      throw new Error("Votre mot de passe doit contenir plus de 6 caractères");
+      hashedPassword = await bcrypt.hash(password, 10);
     }
     const createOrganisation = await Organisation.create({
       name,
       email,
       password: password ? hashedPassword : null,
-      users,
     });
     if (createOrganisation) {
       res.status(201).json(createOrganisation);
@@ -45,6 +43,28 @@ const organisationController = {
       throw new Error("Invalide user data");
     }
   }),
+  /*
+  !@Method GET
+  !@route /api/organisation/:id
+  */
+  findById: asyncHandler(async (req, res) => {
+    const organisation = await Organisation.findById(req.params.id);
+    if (organisation) {
+      res.status(200).json({
+        id: organisation._id,
+        name: organisation.name,
+        email: organisation.email,
+        users: organisation.users,
+      });
+    } else {
+      res.status(500);
+      throw new Error("Organisation non trouvée");
+    }
+  }),
+  /*
+  !@Method POST
+  !@route /api/organisation/login
+  */
   login: asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     const organisation = await Organisation.findOne({ email });
@@ -52,27 +72,98 @@ const organisationController = {
       organisation &&
       (await bcrypt.compare(password, organisation.password))
     ) {
+      const user = await User.find(
+        {
+          _id: { $in: organisation.users },
+        },
+        "name email"
+      );
       res.json({
-        _id: organisation.id,
-        name: organisation.name,
-        email: organisation.email,
+        data: [
+          {
+            _id: organisation.id,
+            name: organisation.name,
+            email: organisation.email,
+            users: user,
+            updatedAt: organisation.updatedAt,
+            createdAt: organisation.createdAt,
+          },
+        ],
       });
     } else {
       res.status(400);
       throw new Error("Identifiant de connexion invalide");
     }
   }),
+  /*
+  !@Method PUT
+  !@route /api/organisation/:id
+  */
   update: asyncHandler(async (req, res) => {
-    try {
-      const updateOrganisation = await Organisation.findByIdAndUpdate(
-        req.params.id,
-        req.body
-      );
-      res.status(200).json({ message: "Organisation mise à jour" });
-    } catch (error) {
-      res.status(500).json({
-        error: "L'organisation n'as pas pu être mise à jour",
+    let hashedPassword;
+    const org = await Organisation.findById(req.params.id);
+    const { name, email, password } = req.body;
+    /*
+    Check if the body is empty
+    */
+    if (Object.keys(req.body).length === 0) {
+      res.status(400);
+      throw new Error("Aucun champs à été mis à jour");
+    } else if (password === "") {
+      res.status(400);
+      throw new Error("Veuillez renseigner un mot de passe");
+    } else if (password) {
+      // Check if the password field is empty or not
+      if (password.length < 6) {
+        res.status(400);
+        throw new Error("Votre mot de passe doit faire au moins 6 caractères");
+      } else {
+        hashedPassword = await bcrypt.hash(password, 10);
+      }
+    }
+    await Organisation.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        email,
+        /*
+        ? if there's no password in the body, put the hold password currently storage in the current organisation
+        */
+        password: password ? hashedPassword : org.password,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+    res.status(200).json({ message: "Organisation mise à jour avec succes" });
+  }),
+  /*
+  !@Method POST
+  !@route /api/organisation/:id/createuser
+  */
+  createUser: asyncHandler(async (req, res) => {
+    let hashedPassword;
+    const { name, email, password } = req.body;
+    const organisation = await Organisation.findById(req.params.id);
+    if (organisation) {
+      hashedPassword = await bcrypt.hash(password, 10);
+      const user = await User.create({
+        name,
+        email,
+        password: password ? hashedPassword : null,
       });
+      await Organisation.findByIdAndUpdate(
+        req.params.id,
+        { $push: { users: user._id } },
+        { new: true, useFindAndModify: false }
+      );
+      res.status(201).json({
+        message: `L'utilisateur ${user.name} à bien été créé`,
+      });
+    } else {
+      res.status(500);
+      throw new Error("L'utilisateur n'a pas pu être créé");
     }
   }),
 };

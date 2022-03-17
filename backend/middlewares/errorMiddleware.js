@@ -1,9 +1,7 @@
-const error404 = (req, res, next) => {
-  console.log("404 ERROR ".red.underline);
+const notFound = (req, res, next) => {
   res.status(404).send("Route not found");
 };
 const responseError = (error, req, res, next) => {
-  console.log("responseEroor Middleware ".green.bold);
   const statusCode = res.statusCode ? res.statusCode : 500;
   res.status(statusCode);
   res.json({
@@ -14,5 +12,5 @@ const responseError = (error, req, res, next) => {
 
 module.exports = {
   responseError,
-  error404,
+  notFound,
 };
