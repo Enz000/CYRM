@@ -1,10 +1,17 @@
 const express = require("express");
-const organisationController = require("../controllers/organisationController");
+const {
+  login,
+  update,
+  getAll,
+  create,
+  createUser,
+  findById,
+} = require("../controllers/organisationController");
 const router = express.Router();
-router.get("/:id", organisationController.findById);
-router.post("/register", organisationController.create);
-router.post("/login", organisationController.login);
-router.post("/:id/createuser", organisationController.createUser);
-router.get("/", organisationController.getAll);
-router.put("/:id", organisationController.update);
+router.get("/:id", findById);
+router.post("/register", create);
+router.post("/login", login);
+router.post("/:id/createuser", createUser);
+router.get("/", getAll);
+router.put("/:id", update);
 module.exports = router;

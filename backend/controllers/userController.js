@@ -1,54 +1,27 @@
 const bcrypt = require("bcryptjs");
 const asyncHandler = require("express-async-handler");
+const Organisation = require("../models/organisationModel");
 const User = require("../models/userModel");
-const { generateAccesToken } = require("../utils/jwt");
-
-// @route POST /api/user/register
-const registerUser = asyncHandler(async (req, res) => {
-  let hashedPassword;
-  const { name, email, password, admin } = req.body;
-  const userExist = await User.findOne({ email });
-  if (userExist) {
-    res.status(400);
-    throw new Error("User already exist");
-  }
-  if (password) {
-    hashedPassword = await bcrypt.hash(password, 10);
-  }
-  const user = await User.create({
-    name,
-    email,
-    password: password ? hashedPassword : null,
-    admin,
-  });
-
-  if (user) {
-    res.status(201).json({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      token: generateAccesToken(user._id),
-      admin: user.admin,
-    });
-  } else {
-    res.status(400);
-    throw new Error("Invalide user data");
-  }
-  res.json({ message: "Register user" });
-});
 
 // @route POST /api/user/login
-const loginUser = asyncHandler(async (req, res) => {
+const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
 
   if (user && (await bcrypt.compare(password, user.password))) {
+    const organisation = await Organisation.find(
+      {
+        _id: { $in: user.organisation },
+      },
+      "name"
+    );
     res.json({
       _id: user.id,
       name: user.name,
       email: user.email,
-      token: generateAccesToken(user._id),
+      organisation: organisation[0].name,
+      refunds: user.refunds,
     });
   } else {
     res.status(400);
@@ -75,7 +48,6 @@ const getMe = asyncHandler(async (req, res) => {
 //   });
 // };
 module.exports = {
-  registerUser,
-  loginUser,
+  login,
   getMe,
 };

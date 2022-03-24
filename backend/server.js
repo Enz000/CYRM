@@ -17,8 +17,8 @@ app.use("/api/organisation", organisationRoutes);
 app.use("/api/refund", refundRoutes);
 app.use("/api/user", userRoutes);
 // Error
-app.use(responseError);
-app.use(notFound);
+app.use(responseError, notFound);
+
 //Server
 app.listen(port, () => {
   console.log(`run http://localhost:${port}`.bgYellow.black);
