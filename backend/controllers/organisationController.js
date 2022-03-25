@@ -133,7 +133,7 @@ const createUser = asyncHandler(async (req, res) => {
       name,
       email,
       password: password ? hashedPassword : null,
-      organisation: req.params.id,
+      organisation: organisation._id,
     });
     await Organisation.findByIdAndUpdate(
       req.params.id,

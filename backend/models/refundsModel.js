@@ -10,23 +10,19 @@ const refundSchema = mongoose.Schema(
     },
     title: {
       type: String,
-      required: [true, "Please add a title value"],
+      required: [true, "Ajoutez un titre"],
     },
     price: {
       type: Number,
-      required: [true, "Please add a price value"],
+      required: [true, "Ajoutez un prix"],
     },
     tva: {
       type: Number,
-      required: [true, "Please add a TVA value"],
+      required: [true, "Tva manquante"],
     },
-    img: {
+    buyingDate: {
       type: String,
-      required: [true, "Please add a proof"],
-    },
-    dateBuying: {
-      type: Date,
-      required: [true, "Please add buying date"],
+      required: [true, "Ajoutez une date d'achat"],
     },
     status: {
       type: String,

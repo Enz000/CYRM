@@ -6,7 +6,6 @@ const { responseError, notFound } = require("./middlewares/errorMiddleware");
 
 const app = express();
 const port = process.env.PORT;
-const refundRoutes = require("./routes/refundRoutes");
 const userRoutes = require("./routes/userRoutes");
 const organisationRoutes = require("./routes/organisationRoutes");
 // Middleware for render body accessible
@@ -14,7 +13,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 // Routes
 app.use("/api/organisation", organisationRoutes);
-app.use("/api/refund", refundRoutes);
 app.use("/api/user", userRoutes);
 // Error
 app.use(responseError, notFound);
